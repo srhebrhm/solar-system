@@ -4,13 +4,17 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - feature/practice
+      - main
 
 env:
   MONGO_URL: mongodb+srv://supercluster.d83jj.mongodb.net/superData
   MOBGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
   MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
   AWS_REGION: us-east-1
+
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
 
 jobs:
   unit-testing:
@@ -51,10 +55,13 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
+        mask-aws-account-id: true
 
     - name: Login to Amazon ECR
       id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+      uses: aws-actions/amazon-ecr-login@v2
+      with:
+        mask-password: true
 
     - name: Setup NodeJS Version
       uses: actions/setup-node@v3
@@ -73,7 +80,7 @@ jobs:
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
   deploy-ec2:
     name: Deploy to EC2
@@ -89,10 +96,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
       
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          mask-password: true
       
       - name: SSH into EC2 and Deploy
         uses: appleboy/ssh-action@v0.1.10
@@ -101,7 +111,20 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Setup AWS CLI if not already installed (if needed)
+            # Check if Docker is installed, install if not
+            if ! command -v docker &> /dev/null; then
+              echo "Docker not found, installing..."
+              sudo yum update -y
+              sudo yum install -y docker
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker ec2-user
+              echo "Docker installed successfully"
+            else
+              echo "Docker is already installed"
+            fi
+            
+            # Setup AWS CLI if not already installed
             if ! command -v aws &> /dev/null; then
               curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
               unzip awscliv2.zip
@@ -113,7 +136,7 @@ jobs:
             export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             export AWS_DEFAULT_REGION=${{ env.AWS_REGION }}
             
-            # Login to ECR
+            # Login to ECR with credentials masking
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
             
             # Stop and remove existing container if it exists
@@ -129,3 +152,7 @@ jobs:
               -e MONGO_USERNAME="${{ secrets.MONGO_USERNAME }}" \
               -e MONGO_PASSWORD="${{ secrets.MONGO_PASSWORD }}" \
               --name solar-system ${{ steps.login-ecr.outputs.registry }}/solar-system:latest
+            echo "Container started successfully"
+
+
+
