@@ -78,5 +78,5 @@ jobs:
               script: |
                 docker stop solar-system || true
                 docker rm solar-system || true
-                docker pull ${{ secrets.DOCKER_USERNAME }}/solar-system:latest
+                docker pull ${{ secrets.DOCKER_USERNAME }}/solar-system
                 docker run -d -p 8080:3000 --name solar-system ${{ secrets.DOCKER_USERNAME }}/solar-system
