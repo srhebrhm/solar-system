@@ -36,3 +36,27 @@ jobs:
           with:
             name: test-results
             path:  test-results.xml
+    docker:
+        name: Docker Build
+        needs: [unit-testing]
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout Repository
+          uses: actions/checkout@v4
+
+        - name: Setup NodeJS Version
+          uses: actions/setup-node@v3
+          with:
+            node-version: 20
+    
+        - name: Install Dependencies
+          run: npm install
+
+        - name: Build Docker Image
+          run: docker build -t solar-system .
+    
+        - name: Push Docker Image
+          run: |
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            docker tag solar-system ${{ secrets.DOCKER_USERNAME }}/solar-system
+            docker push ${{ secrets.DOCKER_USERNAME }}/solar-system
