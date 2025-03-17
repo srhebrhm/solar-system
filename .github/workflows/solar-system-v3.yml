@@ -152,4 +152,3 @@ jobs:
               -e MONGO_USERNAME="${{ secrets.MONGO_USERNAME }}" \
               -e MONGO_PASSWORD="${{ secrets.MONGO_PASSWORD }}" \
               --name solar-system ${{ steps.login-ecr.outputs.registry }}/solar-system:latest
-            echo "Container started successfully"
