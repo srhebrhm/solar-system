@@ -30,18 +30,16 @@ jobs:
       with:
         node-version: '18'
         
-
     - name: Install dependencies
       run: |
-        # For Node.js
         npm ci
+        # Remove dev dependencies to keep package size smaller
+        npm prune --production
         
     - name: Zip Function Code
       run: |
-        # Create deployment package
-        zip -r function.zip . -x "*.git*" "node_modules/*" "tests/*" "*.md"
-        # If using Node.js with included node_modules, use:
-        # zip -r function.zip . -x "*.git*" "tests/*" "*.md"
+        # Include node_modules in the deployment package
+        zip -r function.zip . -x "*.git*" "tests/*" "*.md"
 
     - name: Configure AWS credentials
       run: |
@@ -49,11 +47,8 @@ jobs:
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set region ${{ env.AWS_REGION }}
       
-
     - name: Deploy to Lambda
       run: |
         aws lambda update-function-code \
           --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
           --zip-file fileb://function.zip
-        
-     
