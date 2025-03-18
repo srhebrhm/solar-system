@@ -170,9 +170,8 @@ env:
   AWS_REGION: us-east-1
 
 permissions:
-  id-token: write   # This is required for requesting the JWT
-  contents: read    # This is required for actions/checkout
-
+  id-token: write   
+  contents: read    
 jobs:
   unit-testing:
     name: Unit Testing
@@ -293,27 +292,23 @@ jobs:
               sudo ./aws/install
             fi
             
-            # Configure AWS CLI with instance credentials
             export AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             export AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             export AWS_DEFAULT_REGION=${{ env.AWS_REGION }}
             
-            # Login to ECR using sudo to ensure docker access
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
             
-            # Stop and remove existing container if it exists
+      
             sudo docker stop solar-system || true
             sudo docker rm solar-system || true
             
-            # Pull latest image from ECR
             sudo docker pull ${{ steps.login-ecr.outputs.registry }}/solar-system:latest
-            
-            # Run new container
+          
             sudo docker run -d -p 8080:3000 \
               -e MONGO_URL="${{ env.MONGO_URL }}" \
               -e MONGO_USERNAME="${{ secrets.MONGO_USERNAME }}" \
               -e MONGO_PASSWORD="${{ secrets.MONGO_PASSWORD }}" \
               --name solar-system ${{ steps.login-ecr.outputs.registry }}/solar-system:latest
             
-            # Verify container is running
+            
             sudo docker ps | grep solar-system || echo "Container failed to start"
