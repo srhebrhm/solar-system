@@ -36,15 +36,12 @@ jobs:
         # For Node.js
         npm ci
         
-        # For Python
-        # pip install -r requirements.txt
-
     - name: Zip Function Code
       run: |
         # Create deployment package
         zip -r function.zip . -x "*.git*" "node_modules/*" "tests/*" "*.md"
         # If using Node.js with included node_modules, use:
-        # zip -r function.zip . -x "*.git*" "tests/*" "*.md"
+        # zip -r SOLAR-SYSTEM-CICD-GITHUB-ACTION.zip . -x "*.git*" "tests/*" "*.md"
 
     - name: Configure AWS credentials
       run: |
@@ -57,6 +54,6 @@ jobs:
       run: |
         aws lambda update-function-code \
           --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
-          --zip-file fileb://function.zip
+          --zip-file fileb://SOLAR-SYSTEM-CICD-GITHUB-ACTION.zip
         
      
