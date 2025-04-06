@@ -20,7 +20,7 @@ jobs:
         - name: Checkout Repository
           uses: actions/checkout@v4
 
-        - name: Setup NodeJS Version - 18
+        - name: Setup NodeJS Version - 20
           uses: actions/setup-node@v3
           with:
             node-version: 20
@@ -32,7 +32,7 @@ jobs:
           run: npm test
 
         - name: Archive Test Result
-          uses: actions/upload-artifact@v11b4fbbca46234db805243c6e48e5a6f5e75f7b9
+          uses: actions/upload-artifact@2.2.4
           with:
             name: Mocha-Test-Result
             path: test-results.xml  
