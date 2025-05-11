@@ -7,7 +7,6 @@ on:
     - main
     - feature/* 
 
-
 env: 
   MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
   MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
@@ -30,3 +29,9 @@ jobs:
 
       - name: Unit Testing
         run: npm test 
+
+      - name: Saving The Result of unit Testing
+        uses: actions/upload-artifact@v4
+        with: 
+          name: TestResults
+          path: test-results.xml
