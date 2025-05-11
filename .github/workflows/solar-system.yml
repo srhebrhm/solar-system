@@ -14,12 +14,11 @@ jobs:
     steps: 
       - name: Checkout repo
         uses: actions/checkout@v4
-        
+
       - name: Setup NodeJS Actions
         uses: actions/setup-node@v3
         with: 
           node-version: 18
-
       - name: Install Dependencies
         run: npm install 
 
