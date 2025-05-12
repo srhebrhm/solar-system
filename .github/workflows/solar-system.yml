@@ -44,8 +44,8 @@ jobs:
         if: steps.nodejs-unit-testing.outcome == 'failure' || steps.nodejs-unit-testing.outcome == 'success'
         uses: actions/upload-artifact@v4
         with: 
-          name: Mocha-test-results
-          #name: Numberwise- ${{ matrix.nodejs_version }} on ${{ matrix.os }}
+          #name: Mocha-test-results
+          name: Numberwise- ${{ matrix.nodejs_version }} on ${{ matrix.os }}
           path: test-results.xml
 
   code-coverage: 
