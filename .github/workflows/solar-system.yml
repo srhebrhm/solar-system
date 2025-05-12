@@ -41,7 +41,8 @@ jobs:
         run: npm test 
 
       - name: Saving The Result of unit Testing
-        if: failure() && (steps.nodejs-unit-testing.outcome == 'failure' || steps.nodejs-unit-testing.outcome == 'success')
+        #if: failure() && (steps.nodejs-unit-testing.outcome == 'failure' || steps.nodejs-unit-testing.outcome == 'success')
+        if: always()
         uses: actions/upload-artifact@v4
         with: 
           #name: Mocha-test-results
