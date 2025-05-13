@@ -68,6 +68,17 @@ jobs:
 
   code-coverage: 
     name: Code Coverage
+    container:
+      image: node:18
+    services: 
+      mongo-db:
+        image: mdhack/mongo-db:non-prod   
+      options: 
+        --name mongo
+    env: 
+      MONGO_URI: 'mongodb://mongo:27017/superData'
+      MONGO_USERNAME: non-prod-user
+      MONGO_PASSWORD: non-prod-password
     runs-on: ubuntu-latest
     steps: 
       - name: Checkout Actions
