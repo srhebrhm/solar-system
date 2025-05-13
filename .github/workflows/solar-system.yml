@@ -101,7 +101,7 @@ jobs:
           username: ${{ vars.HUB_USERNAME }}
           password: ${{ secrets.HUB_PASSWORD }}
 
-      - name: Build and push
+      - name: Build Image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -123,3 +123,10 @@ jobs:
             
           echo Testing Image URL using wget 
           wget -q -O - 127.0.0.1:3000/live | grep live
+
+      - name: Image Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags:  ${{ vars.HUB_USERNAME }}/solar-system:${{ github.sha }}
