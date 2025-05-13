@@ -73,8 +73,8 @@ jobs:
     services: 
       mongo-db:
         image: mdhack/mongo-db:non-prod   
-      options: 
-        --name mongo
+        options: 
+          --name mongo
     env: 
       MONGO_URI: 'mongodb://mongo:27017/superData'
       MONGO_USERNAME: non-prod-user
