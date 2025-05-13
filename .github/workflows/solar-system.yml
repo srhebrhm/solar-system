@@ -13,7 +13,7 @@ env:
   MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 
 jobs: 
-  unit-testing: 
+  unit-testing:
     strategy:
       matrix: 
         nodejs_version: [18, 20]
@@ -23,6 +23,16 @@ jobs:
             os: macos-latest  
 
     name: unit testing
+    services: 
+      mongo-db:
+        image: mdhack/mongo-db:non-prod
+        ports: 27017:27017
+        
+    env: 
+      MONGO_URI: 'mongodb://localhost:27017/superData'
+      MONGO_USERNAME: non-prod-user
+      MONGO_PASSWORD: non-prod-password
+
     runs-on: ${{ matrix.os }}
     steps: 
       - name: Checkout repo
