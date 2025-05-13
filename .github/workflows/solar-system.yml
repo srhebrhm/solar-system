@@ -90,7 +90,7 @@ jobs:
   docker: 
     name: Containerizatio
     permissions: 
-      package: write
+      packages: write
     needs: [unit-testing, code-coverage]
     runs-on: ubuntu-latest
     steps: 
