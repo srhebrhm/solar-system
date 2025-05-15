@@ -132,7 +132,11 @@ jobs:
             echo "testing image using wget"
             wget -q -O - 127.0.0.1:3000/live | grep live 
 
-        - name: push Docker Image
+        - name: Set lowercase repo owner
+          id: lower_repo
+          run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+       
+        - name: push to github registry 
           uses: docker/build-push-action@v4
           with:
             context: .
@@ -140,6 +144,6 @@ jobs:
             push: true
             tags: |
               ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
-              ghcr.io/${{ github.repository_owner.toLowerCase() }}/solar-system:${{ github.sha }}
+              ghcr.io/${{ steps.lower_repo.outputs.owner }}/solar-system:${{ github.sha }}
             
             
