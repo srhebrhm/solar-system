@@ -188,6 +188,7 @@ jobs:
             echo "${{ secrets.KUBE_CONFIG_B64 }}" | base64 -d > ${{ runner.temp }}/kubeconfig
 
         - uses: azure/k8s-set-context@v4
+          continue-on-error: true
           with:
             method: kubeconfig
             kubeconfig: ${{ runner.temp }}/kubeconfig
