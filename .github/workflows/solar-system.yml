@@ -169,11 +169,17 @@ jobs:
     steps: 
       - name: Checkout repo
         uses: actions/checkout@v4
-        
+
       - name: Using Action to iNstall Kubectl
         uses: azure/setup-kubectl@v4
         with:
            version: v1.26.0 
+      
+      - name: Login using Kubeconfig File 
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: "{{ secrets.KUBECONFIG }}"
 
       - name: Fetch Kubernetes Cluster Details
         run: | 
