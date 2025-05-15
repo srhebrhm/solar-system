@@ -173,7 +173,7 @@ jobs:
       - name: Using Action to iNstall Kubectl
         uses: azure/setup-kubectl@v4
         with:
-           version: v1.26.0 
+           version: 'v1.30.0'
       
       - name: Login using Kubeconfig File 
         uses: azure/k8s-set-context@v4
