@@ -194,11 +194,6 @@ jobs:
             kubeconfig: ${{ runner.temp }}/kubeconfig
             
 
-        - name: fetch kubernetes cluster details
-          run: |
-            kubectl version  
-            echo -----------------------------------
-            kubectl get nodes
 
         - name: replace tokens in deployment.yaml
           uses: cschleiden/replace-tokens@v1
