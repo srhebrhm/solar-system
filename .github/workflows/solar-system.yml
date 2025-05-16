@@ -254,6 +254,7 @@ jobs:
           run: |
             echo "setting app ingress host url"
             export APP_URL=$(kubectl get ingress -n ${{ vars.NAMESPACE }} -o jsonpath='{.items[0].spec.tls[0].hosts[0]}')
+            echo $APP_URL
             echo "APP_URL=${APP_URL}" >> $GITHUB_ENV
             
 
