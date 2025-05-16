@@ -204,7 +204,12 @@ jobs:
             kubectl version
             echo ----------------------------
             kubectl get nodes
-     
+        - name: saving ingress ip to env variable
+          run: |
+            echo "saving ingress ip to env variable"
+            export INGRESS_IP=$(kubectl get service ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            echo "INGRESS_IP=${INGRESS_IP}" >> $GITHUB_ENV
+
         - name: replace tokens in deployment.yaml
           uses: cschleiden/replace-tokens@v1
           with:
@@ -227,7 +232,7 @@ jobs:
             echo "creating mongo secret"
             kubectl create secret generic mongo-secret \
             --from-literal=MONGO_URI=${{env.MONGO_URI}} \
-            --from-literal=MONGO_USERNAME=${{env.MONGO_USERNAME}} \
+            --from-literal=MONGO_USERNAME=${{vars.MONGO_USERNAME}} \
             --from-literal=MONGO_PASSWORD=${{secrets.MONGO_PASSWORD}} \
             -n ${{ vars.NAMESPACE }} \
             --save-config \
