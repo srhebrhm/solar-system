@@ -201,9 +201,9 @@ jobs:
                cluster-name: 'CICD_testing'
         - name: fetch kubernetes cluster details
           run: |
-            echo kubectl version
+            kubectl version
             echo ----------------------------
-            echo kubectl get nodes
+            kubectl get nodes
      
         - name: replace tokens in deployment.yaml
           uses: cschleiden/replace-tokens@v1
