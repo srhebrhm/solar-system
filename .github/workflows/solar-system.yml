@@ -189,7 +189,7 @@ jobs:
 
         - uses: azure/k8s-set-context@v4
           continue-on-error: true
-          with:
+          with: 
             method: kubeconfig
             kubeconfig: ${{ runner.temp }}/kubeconfig
             
@@ -206,6 +206,20 @@ jobs:
             REPLICAS: ${{ vars.REPLICAS }}
             IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/solar-system:${{ github.sha }}
             INGRESS_IP: ${{ env.INGRESS_IP }}
+        
+
+        - name: create mongo secret
+          run: |
+            echo "creating mongo secret"
+            kubectl create secret generic mongo-secret \
+            --from-literal=MONGO_URI=${{env.MONGO_URI}} \
+            --from-literal=MONGO_USERNAME=${{env.MONGO_USERNAME}} \
+            --from-literal=MONGO_PASSWORD=${{secrets.MONGO_PASSWORD}} \
+            -n ${{ vars.NAMESPACE }} \
+            --save-config \
+            --dry-run=client \
+            -o yaml | kubectl apply -f -
+
 
         - name: check token replacement
           run: |
