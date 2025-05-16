@@ -355,10 +355,10 @@ jobs:
             -o yaml | kubectl apply -f -
             
 
-        - name: deploy to dev environment
+        - name: deploy to production environment
           run: |
             echo "deploying to dev environment"
-            kubectl apply -f kubernetes/development 
+            kubectl apply -f kubernetes/production 
         
         - name: set app ingress host url 
           id: set-app-url
