@@ -210,7 +210,7 @@ jobs:
 
       - name: Creating A secret becuase pod needs it 
         run: | 
-          kubectl create secret generic mongo-db-creds \
+          kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
           --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
           --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} \
           --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
