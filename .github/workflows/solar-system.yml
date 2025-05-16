@@ -376,7 +376,6 @@ jobs:
       runs-on: ubuntu-latest
       needs: [prod-deploy]
       steps:
-        
 
         - name: testing using curl and jq
           continue-on-error: true
