@@ -189,10 +189,10 @@ jobs:
           kubectl get nodes
       
       - name: Saving Ingress IP
+        continue-on-error: true 
         run: | 
            echo "INGRESS_IP="$(kubectl -n ingress-nginx get service  -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >>  $GITHUB_ENV
-        continue_on_error: true   
-          
+           
       - uses: cschleiden/replace-tokens@v1
         with: 
           tokenPrefix: '_{_' 
