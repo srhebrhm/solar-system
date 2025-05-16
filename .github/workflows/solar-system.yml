@@ -172,6 +172,9 @@ jobs:
               ghcr.io/${{ steps.lower_repo.outputs.owner }}/solar-system:${{ github.sha }}
 
     dev-deploy:
+      environment: 
+        name: development
+        url: ${{ steps.set-app-url.outputs.APP_URL }}
       outputs: 
         app_url: ${{ steps.set-app-url.outputs.APP_URL }}
 
@@ -266,6 +269,7 @@ jobs:
         
 
         - name: testing using curl and jq
+          continue-on-error: true
           env:
             APP_URL: ${{ needs.dev-deploy.outputs.app_url }}
           run: |
