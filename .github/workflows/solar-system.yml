@@ -387,6 +387,6 @@ jobs:
             echo "testing using curl and jq"
             curl https://$APP_URL/live | jq -r '.status' | grep live
 
-        
+    
 
           
