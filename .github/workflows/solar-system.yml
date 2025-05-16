@@ -208,8 +208,8 @@ jobs:
         - name: replace tokens in deployment.yaml
           uses: cschleiden/replace-tokens@v1
           with:
-            tokenPrefix: '{'
-            tokenSuffix: '}'
+            tokenPrefix: '_{'
+            tokenSuffix: '}_'
             files: '["kubernetes/development/*.yaml"]'
           env:
             NAMESPACE: ${{ vars.NAMESPACE }}
