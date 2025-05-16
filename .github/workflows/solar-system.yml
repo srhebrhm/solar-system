@@ -165,6 +165,8 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
   dev_deploy: 
     needs: docker
+    outputs: 
+      SVC_URL: ${{ steps.myservice.outputs.ACTUAL_URL }}
     runs-on: ubuntu-latest
     steps: 
       - name: Checkout repo
@@ -219,3 +221,20 @@ jobs:
       - name: Deploying app 
         run: |
           kubectl apply -f kubernetes/development/
+      
+      - name: retriving the url of service with nodeport
+        id: myservice
+        run: | 
+          echo "ACTUAL_URL=$(curl -s ifconfig.me ):$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')" >>  $GITHUB_OUTPUT
+
+  integration-testing:
+    name: Dev Integration Testing
+    needs: dev_deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test URL
+        env:
+          URL: ${{ needs.dev_deploy.outputs.SVC_URL }}
+        run: | 
+          echo $URL
+          echo  http://$URL/live  -s -k | jq -r .status | grep -i live 
