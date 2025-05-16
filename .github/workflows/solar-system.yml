@@ -166,7 +166,7 @@ jobs:
   dev_deploy: 
     needs: docker
     outputs: 
-      SVC_URL: ${{ steps.myservice.outputs.ACTUAL_URL }}
+      #SVC_URL: ${{ steps.myservice.outputs.ACTUAL_URL }}
       PORT: ${{ steps.myservice.outputs.PORT }}
     runs-on: ubuntu-latest
     steps: 
@@ -227,8 +227,8 @@ jobs:
       - name: retriving the url of service with nodeport
         id: myservice
         run: | 
-          echo "ACTUAL_URL=$(curl -s ifconfig.me ):$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')" >>  $GITHUB_OUTPUT
-          echo "PORT=$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')"  >> $GITHUB_NEW
+          #echo "ACTUAL_URL=$(curl -s ifconfig.me ):$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')" >>  $GITHUB_OUTPUT
+          echo "PORT=$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')"  >> $GITHUB_OUTPUT
   integration-testing:
     name: Dev Integration Testing
     needs: dev_deploy
@@ -236,7 +236,7 @@ jobs:
     steps:
       - name: Test URL
         env:
-          URL: ${{ needs.dev_deploy.outputs.SVC_URL }}
+          #URL: ${{ needs.dev_deploy.outputs.SVC_URL }}
           NO: ${{ needs.dev_deploy.outputs.PORT }}
         run: | 
           echo $URL
