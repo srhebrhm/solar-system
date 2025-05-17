@@ -1,33 +1,337 @@
-name: Solar System Workflow
+name: solar system
 
 on: 
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-      - 'feature/*'
-    
-jobs:
-    unit-testing:
-        name: Unit Testing
-        runs-on: ubuntu-latest
-        steps:
-        - name: Checkout Repository
-          uses: actions/checkout@v4
+  workflow_dispatch: 
+  push: 
+    branches: 
+    - main
+    - feature/* 
 
-        - name: Setup NodeJS Version
-          uses: actions/setup-node@v3
-          with:
-            node-version: 20
-    
-        - name: Install Dependencies
-          run: npm install
-    
-        - name: Unit Testing
-          run: npm test
+env: 
+  MONGO_URI: 'mongodb+srv://supercluster.d83jj.mongodb.net/superData'
+  MONGO_USERNAME: ${{ vars.MONGO_USERNAME }}
+  MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+
+jobs: 
+  unit-testing:
+    strategy:
+      matrix: 
+        nodejs_version: [18, 20]
+        os: [ubuntu-latest]
+        exclude: 
+          - nodejs_version: 18
+            os: macos-latest  
+
+    name: unit testing
+    services: 
+      mongo-db:
+        image: mdhack/mongo-db:non-prod
+        ports: 
+          - 27017:27017
+        
+    env: 
+      MONGO_URI: 'mongodb://localhost:27017/superData'
+      MONGO_USERNAME: non-prod-user
+      MONGO_PASSWORD: non-prod-password
+
+    runs-on: ${{ matrix.os }}
+    steps: 
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup NodeJS Actions Version is ${{ matrix.nodejs_version }}
+        uses: actions/setup-node@v3
+        with: 
+          node-version: ${{ matrix.nodejs_version }}
+
+      - name: Saving Cache 
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Dependencies
+        run: npm install 
+
+      - name: Unit Testing
+        id: nodejs-unit-testing
+        run: npm test 
+
+      - name: Saving The Result of unit Testing
+        #if: failure() && (steps.nodejs-unit-testing.outcome == 'failure' || steps.nodejs-unit-testing.outcome == 'success')
+        if: always()
+        uses: actions/upload-artifact@v4
+        with: 
+          #name: Mocha-test-results
+          name: Numberwise- ${{ matrix.nodejs_version }} on ${{ matrix.os }}
+          path: test-results.xml
+
+  code-coverage: 
+    name: Code Coverage
+    container:
+      image: node:18
+    services: 
+      mongo-db:
+        image: mdhack/mongo-db:non-prod   
+        options: 
+          --name mongo
+    env: 
+      MONGO_URI: 'mongodb://mongo:27017/superData'
+      MONGO_USERNAME: non-prod-user
+      MONGO_PASSWORD: non-prod-password
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout Actions
+        uses: actions/checkout@v4
+
+      - name: Setup Node JS
+        uses: actions/setup-node@v3
+        with: 
+          node-version: 18
+
+      - name: Saving Cache 
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Installing Dependencies 
+        run: npm install
+
+      - name: Running Code Coverage
+        continue-on-error: true
+        run: npm run coverage
+
+      - name: Saving the artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Coverage Result
+          path: coverage
+          retention-days: 1
+
+  docker: 
+    name: Containerizatio
+    permissions: 
+      packages: write
+    needs: [unit-testing, code-coverage]
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkoing Out repo
+        uses: actions/checkout@v4
+
+      - name: Login Docker
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.HUB_USERNAME }}
+          password: ${{ secrets.HUB_PASSWORD }}
+
+      - name: GHCR Login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags:  ${{ vars.HUB_USERNAME }}/solar-system:${{ github.sha }}
+
+      - name: Docker Image Testing1
+        run: |
+          docker images
+          docker run --name solar-system-app -d  \
+             -p 3000:3000 \
+             -e MONGO_URI=$MONGO_URI \
+             -e MONGO_USERNAME=$MONGO_USERNAME \
+             -e MONGO_PASSWORD=$MONGO_PASSWORD \
+             ${{ vars.HUB_USERNAME }}/solar-system:${{ github.sha }}
           
-        - name: Archive Test Result
-          uses: actions/upload-artifact@v3
-          with:
-            name: Mocha-Test-Result
-            path: test-results.xml
+          export IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' solar-system-app)
+          echo $IP
+            
+          echo Testing Image URL using wget 
+          wget -q -O - 127.0.0.1:3000/live | grep live
+
+      - name: Image Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |  
+            ${{ vars.HUB_USERNAME }}/solar-system:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/solar-system:${{ github.sha }}
+
+  dev_deploy: 
+    if: contains(github.ref, 'feature/')
+    needs: docker
+    environment:
+      name: development
+      url: http://52.33.235.37:${{ steps.myservice.outputs.PORT }}
+    outputs: 
+      #SVC_URL: ${{ steps.myservice.outputs.ACTUAL_URL }}
+      PORT: ${{ steps.myservice.outputs.PORT }}
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Using Action to iNstall Kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+           version: 'v1.30.0'
+      
+      - name: Login using Kubeconfig File 
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: "${{ secrets.KUBECONFIG }}"
+          context: kubernetes-admin@kubernetes
+
+      - name: Fetch Kubernetes Cluster Details
+        run: | 
+          kubectl version
+          echo ------
+          kubectl get nodes
+      
+      - name: Saving Ingress IP
+        continue-on-error: true 
+        run: | 
+           echo "INGRESS_IP="$(kubectl -n ingress-nginx get service  -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >>  $GITHUB_ENV
+
+      - uses: cschleiden/replace-tokens@v1
+        with: 
+          tokenPrefix: '_{_' 
+          tokenSuffix: '_}_' 
+          files: '["kubernetes/development/*.yaml"]' 
+        env: 
+          NAMESPACE: ${{ vars.NAMESPACE }}
+          REPLICAS: ${{ vars.REPLICAS }}
+          IMAGE: ${{ vars.HUB_USERNAME }}/solar-system:${{ github.sha }}
+          INGRESS_IP: ${{ env.INGRESS_IP }}
+
+      - name: Printing YAML
+        continue-on-error: true
+        run: |
+          cat kubernetes/development/*.yaml
+
+      - name: Creating A secret becuase pod needs it 
+        continue-on-error: true
+        run: | 
+          kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
+          --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
+          --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} \
+          --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} 
+
+      - name: Deploying app 
+        run: |
+          kubectl apply -f kubernetes/development/
+      
+      - name: retriving the url of service with nodeport
+        id: myservice
+        run: | 
+          #echo "ACTUAL_URL=$(curl -s ifconfig.me ):$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')" >>  $GITHUB_OUTPUT
+          echo "PORT=$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')"  >> $GITHUB_OUTPUT
+
+
+  integration-testing:
+    if: contains(github.ref, 'feature/')
+    name: Dev Integration Testing
+    needs: dev_deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test URL
+        env:
+          #URL: ${{ needs.dev_deploy.outputs.SVC_URL }}
+          NO: ${{ needs.dev_deploy.outputs.PORT }}
+        run: | 
+          echo $URL
+          curl  http://52.33.235.37:$NO/live  -s -k | jq -r .status | grep -i live 
+
+  prod_deploy: 
+    if: github.ref == 'refs/heads/main'
+    needs: docker
+    environment:
+      name: production
+      url: http://52.33.235.37:${{ steps.myservice.outputs.PORT }}
+    outputs: 
+      #SVC_URL: ${{ steps.myservice.outputs.ACTUAL_URL }}
+      PORT: ${{ steps.myservice.outputs.PORT }}
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Using Action to iNstall Kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+           version: 'v1.30.0'
+      
+      - name: Login using Kubeconfig File 
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: "${{ secrets.KUBECONFIG }}"
+          context: kubernetes-admin@kubernetes
+
+      - name: Fetch Kubernetes Cluster Details
+        run: | 
+          kubectl version
+          echo ------
+          kubectl get nodes
+      
+      - name: Saving Ingress IP
+        continue-on-error: true 
+        run: | 
+           echo "INGRESS_IP="$(kubectl -n ingress-nginx get service  -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >>  $GITHUB_ENV
+
+      - uses: cschleiden/replace-tokens@v1
+        with: 
+          tokenPrefix: '_{_' 
+          tokenSuffix: '_}_' 
+          files: '["kubernetes/production/*.yaml"]' 
+        env: 
+          NAMESPACE: ${{ vars.NAMESPACE }}
+          REPLICAS: ${{ vars.REPLICAS }}
+          IMAGE: ${{ vars.HUB_USERNAME }}/solar-system:${{ github.sha }}
+          INGRESS_IP: ${{ env.INGRESS_IP }}
+
+      - name: Printing YAML
+        continue-on-error: true
+        run: |
+          cat kubernetes/production/*.yaml
+
+      - name: Creating A secret becuase pod needs it 
+        continue-on-error: true
+        run: | 
+          kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
+          --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
+          --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} \
+          --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} 
+
+      - name: Deploying app 
+        run: |
+          kubectl apply -f kubernetes/production/
+      
+      - name: retriving the url of service with nodeport
+        id: myservice
+        run: | 
+          #echo "ACTUAL_URL=$(curl -s ifconfig.me ):$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')" >>  $GITHUB_OUTPUT
+          echo "PORT=$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')"  >> $GITHUB_OUTPUT
+
+
+  prod-integration-testing:
+    if: github.ref == 'refs/heads/main'
+    name: Prod Integration Testing
+    needs: prod_deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test URL
+        env:
+          #URL: ${{ needs.prod_deploy.outputs.SVC_URL }}
+          NO: ${{ needs.prod_deploy.outputs.PORT }}
+        run: | 
+          echo $URL
+          curl  http://52.33.235.37:$NO/live  -s -k | jq -r .status | grep -i live 
