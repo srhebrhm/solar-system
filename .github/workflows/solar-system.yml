@@ -247,3 +247,87 @@ jobs:
         run: | 
           echo $URL
           curl  http://52.33.235.37:$NO/live  -s -k | jq -r .status | grep -i live 
+
+  prod_deploy: 
+    needs: integration-testing
+    environment:
+      name: production
+      url: http://52.33.235.37:${{ steps.myservice.outputs.PORT }}
+    outputs: 
+      #SVC_URL: ${{ steps.myservice.outputs.ACTUAL_URL }}
+      PORT: ${{ steps.myservice.outputs.PORT }}
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Using Action to iNstall Kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+           version: 'v1.30.0'
+      
+      - name: Login using Kubeconfig File 
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: "${{ secrets.KUBECONFIG }}"
+          context: kubernetes-admin@kubernetes
+
+      - name: Fetch Kubernetes Cluster Details
+        run: | 
+          kubectl version
+          echo ------
+          kubectl get nodes
+      
+      - name: Saving Ingress IP
+        continue-on-error: true 
+        run: | 
+           echo "INGRESS_IP="$(kubectl -n ingress-nginx get service  -o jsonpath="{.status.loadBalancer.ingress[0].ip}")" >>  $GITHUB_ENV
+
+      - uses: cschleiden/replace-tokens@v1
+        with: 
+          tokenPrefix: '_{_' 
+          tokenSuffix: '_}_' 
+          files: '["kubernetes/production/*.yaml"]' 
+        env: 
+          NAMESPACE: ${{ vars.NAMESPACE }}
+          REPLICAS: ${{ vars.REPLICAS }}
+          IMAGE: ${{ vars.HUB_USERNAME }}/solar-system:${{ github.sha }}
+          INGRESS_IP: ${{ env.INGRESS_IP }}
+
+      - name: Printing YAML
+        continue-on-error: true
+        run: |
+          cat kubernetes/production/*.yaml
+
+      - name: Creating A secret becuase pod needs it 
+        continue-on-error: true
+        run: | 
+          kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
+          --from-literal=MONGO_URI=${{ env.MONGO_URI }} \
+          --from-literal=MONGO_USERNAME=${{ vars.MONGO_USERNAME }} \
+          --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} 
+
+      - name: Deploying app 
+        run: |
+          kubectl apply -f kubernetes/production/
+      
+      - name: retriving the url of service with nodeport
+        id: myservice
+        run: | 
+          #echo "ACTUAL_URL=$(curl -s ifconfig.me ):$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')" >>  $GITHUB_OUTPUT
+          echo "PORT=$(kubectl get svc  solar-system -n default -o jsonpath='{.spec.ports[0].nodePort}')"  >> $GITHUB_OUTPUT
+
+
+  prod-integration-testing:
+    name: Prod Integration Testing
+    needs: prod_deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test URL
+        env:
+          #URL: ${{ needs.prod_deploy.outputs.SVC_URL }}
+          NO: ${{ needs.prod_deploy.outputs.PORT }}
+        run: | 
+          echo $URL
+          curl  http://52.33.235.37:$NO/live  -s -k | jq -r .status | grep -i live 
