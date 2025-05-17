@@ -168,7 +168,7 @@ jobs:
     needs: docker
     environment:
       name: development
-      url: http://52.33.235.37:$PORT
+      url: http://52.33.235.37:${{ steps.myservice.outputs.PORT }}
     outputs: 
       #SVC_URL: ${{ steps.myservice.outputs.ACTUAL_URL }}
       PORT: ${{ steps.myservice.outputs.PORT }}
