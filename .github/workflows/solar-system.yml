@@ -44,14 +44,19 @@ jobs:
         with: 
           node-version: ${{ matrix.nodejs_version }}
 
-      - name: Saving Cache 
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+      # - name: Saving Cache 
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: node_modules
+      #     key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
 
-      - name: Install Dependencies
-        run: npm install 
+      # - name: Install Dependencies
+      #   run: npm install 
+
+      - name: Using Composite Action of Cache & Install Packages
+        uses: ./.github/workflows/custom-actions/npm-action
+        with: 
+          path-of-folder: node_modules
 
       - name: Unit Testing
         id: nodejs-unit-testing
@@ -89,14 +94,19 @@ jobs:
         with: 
           node-version: 18
 
-      - name: Saving Cache 
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+      # - name: Saving Cache 
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: node_modules
+      #     key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
 
-      - name: Installing Dependencies 
-        run: npm install
+      # - name: Installing Dependencies 
+      #   run: npm install
+
+      - name: Using Composite Action of Cache & Install Packages
+        uses: ./.github/workflows/custom-actions/npm-action
+        with: 
+          path-of-folder: node_modules
 
       - name: Running Code Coverage
         continue-on-error: true
