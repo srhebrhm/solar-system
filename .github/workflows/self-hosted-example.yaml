@@ -11,4 +11,4 @@ jobs:
       run: | 
         echo "Mayank Modi self Hosted Runner is Working!!"
         echo Ok!!
-        sleep 5s
+        sleep 1500s
