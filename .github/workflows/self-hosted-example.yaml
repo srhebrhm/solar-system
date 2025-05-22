@@ -1,0 +1,14 @@
+name: Testing Self Hosted runner
+on: 
+  workflow_dispatch: 
+
+jobs: 
+  testing:
+    runs-on: self-hosted
+    #runs-on: [self-hosted, prod, main]
+    steps:
+    - name:  echo content
+      run: | 
+        echo "Mayank Modi self Hosted Runner is Working!!"
+        echo Ok!!
+        sleep 5s
