@@ -36,9 +36,11 @@ jobs:
           run: npm install
 
         - name: Unit Testing
+          id: nodejs-testing-step
           run: npm test
 
         - name: Archive Test Result
+          if: always()
           uses: actions/upload-artifact@v4
           with:
             name: output-${{matrix.operating_system}}-${{matrix.nodejs_version}}
