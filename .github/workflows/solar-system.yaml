@@ -165,6 +165,12 @@ jobs:
         uses: azure/setup-kubectl@v4
         with: 
           version: 'v1.33.1'
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
 
       - name: Set Kubeconfig file
         uses: azure/k8s-set-context@v4
