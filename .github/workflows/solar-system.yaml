@@ -209,6 +209,9 @@ jobs:
         run: |
          cat kubernetes/development/*.yaml
 
+      - name: Create namespace
+        run: kubectl create ns ${{vars.NAMESPACE}}
+
       - name: Create MongoDB Secret
         run: |
          kubectl create secret generic mongo-db-creds -n ${{vars.NAMESPACE}} \
