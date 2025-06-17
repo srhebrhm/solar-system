@@ -178,6 +178,12 @@ jobs:
           method: kubeconfig
           kubeconfig: ${{secrets.KUBECONFIG}}
 
+      - name: Set up GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: kkproject-cluster
+          location: us-central1
+
       - name: Fetch K8s Cluster Details
         run: |
           kubectl version 
