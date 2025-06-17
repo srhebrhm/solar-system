@@ -166,12 +166,14 @@ jobs:
         with: 
           version: 'v1.33.1'
 
-      # - name: Set Kubeconfig file
-      #   uses: azure/k8s-set-context@v4
-      #   with:
-      #     method: kubeconfig
-      #     kubeconfig: ${{secrets.KUBECONFIG}}
+      - name: Set Kubeconfig file
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{secrets.KUBECONFIG}}
 
       - name: Fetch K8s Cluster Details
-        run: 
+        run: |
+          kubectl version 
+          echo ---------------
           kubectl get nodes
