@@ -215,7 +215,7 @@ jobs:
          --from-literal=MONGO_URI=${{env.MONGO_URI}} \
          --from-literal=MONGO_USERNAME=${{vars.MONGO_USERNAME}} \
          --from-literal=MONGO_PASSWORD=${{secrets.MONGO_PASSWORD}} \
-         --dry-run=client \
+         --dry-run=client --save-config \
          -o yaml | kubectl apply -f -
       
       - name: Deploy to Dev Env
