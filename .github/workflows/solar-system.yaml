@@ -173,7 +173,5 @@ jobs:
           kubeconfig: ${{secrets.KUBECONFIG}}
 
       - name: Fetch K8s Cluster Details
-        run: |
-          kubectl version
-          echo --------
+        run: 
           kubectl get nodes
