@@ -210,8 +210,9 @@ jobs:
         run: |
          cat kubernetes/development/*.yaml
 
-      - name: Create namespace
-        run: kubectl create ns ${{vars.NAMESPACE}}
+      - name: Create namespace 
+        run: | 
+          kubectl get ns ${{vars.NAMESPACE}} || kubectl create ns ${{vars.NAMESPACE}}
 
       - name: Create MongoDB Secret
         run: |
