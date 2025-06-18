@@ -1,6 +1,13 @@
 name: Deployment - Reusable Workflow
 on:
     workflow_call: 
+      secrets:
+        gcp-auth:
+          required: true
+        k8s-kubeconfig: 
+          required: true
+        mongodb-password:
+          required: true
 jobs:
    reuse-deploy:
     environment: 
@@ -21,14 +28,14 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+          credentials_json: '${{ secrets.gcp-auth }}'
 
 
       - name: Set Kubeconfig file
         uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
-          kubeconfig: ${{secrets.KUBECONFIG}}
+          kubeconfig: ${{secrets.k8s-kubeconfig}}
 
       - name: Set up GKE credentials
         uses: google-github-actions/get-gke-credentials@v2
@@ -71,7 +78,7 @@ jobs:
          kubectl create secret generic mongo-db-creds -n ${{vars.NAMESPACE}} \
          --from-literal=MONGO_URI=${{env.MONGO_URI}} \
          --from-literal=MONGO_USERNAME=${{vars.MONGO_USERNAME}} \
-         --from-literal=MONGO_PASSWORD=${{secrets.MONGO_PASSWORD}} \
+         --from-literal=MONGO_PASSWORD=${{secrets.mongodb-password}} \
          --dry-run=client --save-config \
          -o yaml | kubectl apply -f -
       
