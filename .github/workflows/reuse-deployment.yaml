@@ -6,8 +6,21 @@ on:
         mongodb-uri:
           required: true
           type: string
-
-
+        k8s-manifest-uri:
+          description: Directory containing Kubernetes manifest files
+          default: kubernetes/
+          required: true
+          type: string
+        kubectl-version:
+          description: Provide the required kubectl version
+          default: v1.33.0
+          required: false
+          type: string
+        environment:
+          description: Provide the Deployment Environment
+          default: dev
+          required: true
+          type: string
       secrets:
         gcp-auth:
           required: true
@@ -15,10 +28,13 @@ on:
           required: true
         mongodb-password:
           required: true
+      outputs:
+        application-uri:
+          value: ${{jobs.reuse-deploy.outputs.APP_INGRESS_URL}}
 jobs:
    reuse-deploy:
     environment: 
-      name: development
+      name: ${{inputs.environment}}
       url: https://${{steps.set-ingress-host-address.outputs.APP_INGRESS_HOST}}
     outputs:
       APP_INGRESS_URL: ${{steps.set-ingress-host-address.outputs.APP_INGRESS_HOST}}
@@ -30,7 +46,7 @@ jobs:
       - name: Install kubectl CLI
         uses: azure/setup-kubectl@v4
         with: 
-          version: 'v1.33.1'
+          version: ${{inputs.kubectl-version}}
       
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -65,7 +81,7 @@ jobs:
         with:
           tokenPrefix: '_{_'
           tokenSuffix: '_}_'
-          files: '["kubernetes/development/*.yaml"]'
+          files: '["${{inputs.k8s-manifest-uri}}*.yaml"]'
         env:
           NAMESPACE: ${{vars.NAMESPACE}}
           REPLICAS: ${{vars.REPLICAS}}
@@ -74,7 +90,7 @@ jobs:
 
       - name: Check files
         run: |
-         cat kubernetes/development/*.yaml
+         cat ${{inputs.k8s-manifest-uri}}*.yaml
 
       - name: Create namespace 
         run: | 
@@ -91,7 +107,7 @@ jobs:
       
       - name: Deploy to Dev Env
         run: |
-          kubectl apply -f kubernetes/development
+          kubectl apply -f ${{inputs.k8s-manifest-uri}}
         
       - name: Set App Ingress Host URL
         id: set-ingress-host-address

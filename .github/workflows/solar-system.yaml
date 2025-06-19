@@ -164,6 +164,8 @@ jobs:
       mongodb-password: ${{ secrets.MONGO_PASSWORD}}
     with:
       mongodb-uri: ${{vars.MONGO_URI}}
+      environment: development
+      k8s-manifest-uri: kubernetes/development/
 
 
    dev-integration-testing:
@@ -174,7 +176,7 @@ jobs:
       steps:
         - name: Test URL output CURL and JQ
           env: 
-            URL: ${{needs.dev-deploy.outputs.APP_INGRESS_URL}}
+            URL: ${{needs.dev-deploy.outputs.application-uri}}
           run: |
             echo $URL
             echo "----------"
@@ -190,6 +192,10 @@ jobs:
       mongodb-password: ${{ secrets.MONGO_PASSWORD}}
     with:
       mongodb-uri: ${{vars.MONGO_URI}}
+      environment: production
+      k8s-manifest-uri: kubernetes/production/
+
+
 
 
    prod-integration-testing:
@@ -200,7 +206,7 @@ jobs:
       steps:
         - name: Test URL output CURL and JQ
           env: 
-            URL: ${{needs.prod-deploy.outputs.APP_INGRESS_URL}}
+            URL: ${{needs.prod-deploy.outputs.application-uri}}
           run: |
             echo $URL
             echo "--------------------"
