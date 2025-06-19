@@ -158,13 +158,12 @@ jobs:
     needs: docker
     if: contains(github.ref, 'feature/')
     uses: tobi-willy/solar-system/.github/workflows/reuse-deployment.yaml@feature/exploring-workflow
-    
-  
-
     secrets:
       gcp-auth: ${{secrets.GCP_SA_KEY}}
       k8s-kubeconfig: ${{secrets.KUBECONFIG}}
       mongodb-password: ${{ secrets.MONGO_PASSWORD}}
+    with:
+      mongodb-uri: ${{vars.MONGO_URI}}
 
 
    dev-integration-testing:
@@ -189,6 +188,8 @@ jobs:
       gcp-auth: ${{secrets.GCP_SA_KEY}}
       k8s-kubeconfig: ${{secrets.KUBECONFIG}}
       mongodb-password: ${{ secrets.MONGO_PASSWORD}}
+    with:
+      mongodb-uri: ${{vars.MONGO_URI}}
 
 
    prod-integration-testing:
