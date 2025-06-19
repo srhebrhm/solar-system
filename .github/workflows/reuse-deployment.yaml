@@ -1,6 +1,13 @@
 name: Deployment - Reusable Workflow
 on:
     workflow_call: 
+      
+      inputs:
+        mongodb-uri:
+          required: true
+          type: string
+
+
       secrets:
         gcp-auth:
           required: true
@@ -76,7 +83,7 @@ jobs:
       - name: Create MongoDB Secret
         run: |
          kubectl create secret generic mongo-db-creds -n ${{vars.NAMESPACE}} \
-         --from-literal=MONGO_URI=${{env.MONGO_URI}} \
+         --from-literal=MONGO_URI=${{inputs.mongodb-uri}} \
          --from-literal=MONGO_USERNAME=${{vars.MONGO_USERNAME}} \
          --from-literal=MONGO_PASSWORD=${{secrets.mongodb-password}} \
          --dry-run=client --save-config \
