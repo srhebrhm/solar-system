@@ -102,6 +102,37 @@ jobs:
             path: coverage
             retention-days: 5
 
+   reports-s3:
+    needs: [code-coverage, unit-testing]
+    name: AWS - S3 Upload Reports
+    strategy: 
+        matrix: 
+            nodejs_version: [ 18, 20 ]
+            operating_system: [ubuntu-latest]
+    runs-on: ${{matrix.operating_system}}
+    continue-on-error: true
+    steps:
+      - name: Download Test Artifact
+        uses: actions/download-artifact@v4
+        with: 
+          name: output-${{matrix.operating_system}}-${{matrix.nodejs_version}}
+      
+      - name: Download Code Coverage Artifact
+        uses: actions/download-artifact@v4
+        with: 
+          name: Code-Coverage-Result
+        
+      - name: Merge Test Files
+        run: | 
+          ls -ltr
+          mkdir reports-${{github.sha}}
+          mv cobertura-coverage.xml reports-${{github.sha}}/
+          mv test-results.xml reports-${{github.sha}}/
+          ls -ltr reports-${{github.sha}}/
+
+      - name: Upload to AWS S3
+        run: echo "Uploading....."
+  
    docker: 
     name: Containerization
     permissions: 
@@ -166,7 +197,7 @@ jobs:
       mongodb-uri: ${{vars.MONGO_URI}}
       environment: development
       k8s-manifest-uri: kubernetes/development/
-
+ 
 
    dev-integration-testing:
       if: contains(github.ref, 'feature/')
@@ -194,9 +225,6 @@ jobs:
       mongodb-uri: ${{vars.MONGO_URI}}
       environment: production
       k8s-manifest-uri: kubernetes/production/
-
-
-
 
    prod-integration-testing:
       name: Prod Integration Testing
