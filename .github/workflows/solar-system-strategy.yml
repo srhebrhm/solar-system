@@ -15,10 +15,10 @@ jobs:
         name: Unit Testing
         strategy:
             matrix:
-              nodejs_version: [18, 20]
+              nodejs_version: [20]
               operating_system: [ubuntu_latest,macos_latest]
               exclude:
-                - nodejs_version: 18
+                - nodejs_version: 20
                   operating_system: macos_latest
         runs-on: ${{ matrix.operating_system}}
         steps:
@@ -55,10 +55,10 @@ jobs:
         name: Code Coverage
         strategy:
             matrix:
-              nodejs_version: [18, 20]
+              nodejs_version: [20]
               operating_system: [ubuntu_latest,macos_latest]
               exclude:
-                - nodejs_version: 18
+                - nodejs_version: 20
                   operating_system: macos_latest
         runs-on: ${{ matrix.operating_system}}
         steps:
