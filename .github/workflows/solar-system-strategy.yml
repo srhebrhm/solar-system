@@ -15,7 +15,7 @@ jobs:
         name: Unit Testing
         strategy:
             matrix:
-              nodejs_version: [18, 19, 20]
+              nodejs_version: [18, 20]
               operating_system: [ubuntu_latest,macos_latest]
               exclude:
                 - nodejs_version: 18
@@ -35,8 +35,9 @@ jobs:
           with:
             path: node_modules
             key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
-        # - name: Install Dependencies
-        #   run: npm install
+
+        - name: Install Dependencies
+          run: npm install
     
         - name: Unit Testing
           id: nodejs-unit-testing-step
@@ -74,8 +75,9 @@ jobs:
           with:
             path: node_modules
             key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}            
-        # - name: Install Dependencies
-        #   run: npm install
+ 
+        - name: Install Dependencies
+          run: npm install
     
         - name: Check Code Coverage
           continue-on-error: true
