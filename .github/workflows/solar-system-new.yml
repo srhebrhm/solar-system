@@ -61,7 +61,6 @@ jobs:
         runs-on: ubuntu-latest
         container:
           image: node:20
-          credentials:
         services:
           mongodb:
             image: siddharth67/mongo-db:non-prod
