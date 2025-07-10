@@ -47,6 +47,7 @@ jobs:
           run: npm test
           
         - name: Archive Test Result
+        # the line below is commeneted as we've added an alternative: always
         #   if: failure() && (steps.nodejs-unit-testing-step.outcome == 'failure' || steps.nodejs-unit-testing-step.outcome == 'success')
           if: always()
           uses: actions/upload-artifact@v4
@@ -58,14 +59,26 @@ jobs:
         name: Code Coverage
         needs: unit-testing
         runs-on: ubuntu-latest
+        container:
+          image: node:20
+          credentials:
+        services:
+          mongodb:
+            image: siddharth67/mongo-db:non-prod
+            options:
+              --name mongo
+        env:
+          MONGO_URI: 'mongodb://mongo:27017/superData'
+          MONGO_USERNAME: non-prod-user
+          MONGO_PASSWORD: non-prod-password     
         steps:
         - name: Checkout Repository
           uses: actions/checkout@v4
-
-        - name: Setup NodeJS Version
-          uses: actions/setup-node@v3
-          with:
-            node-version: 20
+        # We comment the lines below due to having Job Container
+        # - name: Setup NodeJS Version
+        #   uses: actions/setup-node@v3
+        #   with:
+        #     node-version: 20
 
         - name: Cache NPM dependencies
           uses: actions/cache@v4
